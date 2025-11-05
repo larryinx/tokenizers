@@ -2,29 +2,52 @@ from transformers import PreTrainedTokenizerFast
 
 tokenizer = PreTrainedTokenizerFast(tokenizer_file="./tokenizer.json")
 
-text = """
-Here is Python code:
+# text = """
+# Here is Python code:
+# ```python
+# def fibonacci(n):
+#     if n <= 1:
+#         return n
+
+#     return fibonacci(n - 1) + fibonacci(n - 2)
+
+# ```
+# Done!
+
+# Another line of text.
+
+# ```python
+# def fibonacci(n):
+#     if n <= 1:
+#         return n
+
+#     return fibonacci(n - 1) + fibonacci(n - 2)
+# ```
+
+# Done!
+# """
+
+text = """You are given a Python function and an assertion containing an input to the function. Complete the assertion with a literal (no unsimplified expressions, no function calls) containing the output when executing the provided code on the given input, even if the function is incorrect or incomplete. Do NOT output any extra information. Provide the full assertion with the correct output in [ANSWER] and [/ANSWER] tags, following the examples.
+
 ```python
-def fibonacci(n):
-    if n <= 1:
-        return n
-
-    return fibonacci(n - 1) + fibonacci(n - 2)
-
+def repeatNumber(number : int) -> int:
+    return number
 ```
-Done!
+assert repeatNumber(number = 17) == ??
 
-Another line of text.
+[ANSWER]
+assert repeatNumber(number = 17) == 17
+[/ANSWER]
 
 ```python
-def fibonacci(n):
-    if n <= 1:
-        return n
-
-    return fibonacci(n - 1) + fibonacci(n - 2)
+def addCharacterA(string : str) -> str:
+    return string + "a"
 ```
+assert addCharacterA(string = "x9j") == ??
 
-Done!
+[ANSWER]
+assert addCharacterA(string = "x9j") == "x9ja"
+[/ANSWER]
 """
 
 
