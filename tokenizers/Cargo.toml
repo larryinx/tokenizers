@@ -69,6 +69,7 @@ monostate = "0.1.12"
 ahash = { version = "0.8.11", features = ["serde"] }
 dary_heap = { version = "0.3.6", features = ["serde"] }
 compact_str = { version = "0.9", features = ["serde"] }
+rustpython-parser = { version = "0.4", optional = true }
 
 [features]
 default = ["progressbar", "onig", "esaxx_fast"]
@@ -77,6 +78,7 @@ progressbar = ["indicatif"]
 http = ["hf-hub"]
 unstable_wasm = ["fancy-regex", "getrandom/wasm_js"]
 rustls-tls = ["hf-hub?/rustls-tls"]
+python_lexer = ["rustpython-parser"]
 
 [dev-dependencies]
 criterion = "0.6"

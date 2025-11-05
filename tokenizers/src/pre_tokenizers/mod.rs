@@ -1,5 +1,6 @@
 pub mod bert;
 pub mod byte_level;
+pub mod code_lexer;
 pub mod delimiter;
 pub mod digits;
 pub mod fixed_length;
@@ -14,6 +15,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::pre_tokenizers::bert::BertPreTokenizer;
 use crate::pre_tokenizers::byte_level::ByteLevel;
+use crate::pre_tokenizers::code_lexer::CodeLexer;
 use crate::pre_tokenizers::delimiter::CharDelimiterSplit;
 use crate::pre_tokenizers::digits::Digits;
 use crate::pre_tokenizers::fixed_length::FixedLength;
@@ -30,6 +32,7 @@ use crate::{PreTokenizedString, PreTokenizer};
 pub enum PreTokenizerWrapper {
     BertPreTokenizer(BertPreTokenizer),
     ByteLevel(ByteLevel),
+    CodeLexer(CodeLexer),
     Delimiter(CharDelimiterSplit),
     Metaspace(Metaspace),
     Whitespace(Whitespace),
@@ -47,6 +50,7 @@ impl PreTokenizer for PreTokenizerWrapper {
         match self {
             Self::BertPreTokenizer(bpt) => bpt.pre_tokenize(normalized),
             Self::ByteLevel(bpt) => bpt.pre_tokenize(normalized),
+            Self::CodeLexer(cl) => cl.pre_tokenize(normalized),
             Self::Delimiter(dpt) => dpt.pre_tokenize(normalized),
             Self::Metaspace(mspt) => mspt.pre_tokenize(normalized),
             Self::Whitespace(wspt) => wspt.pre_tokenize(normalized),
@@ -77,6 +81,7 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
         pub enum EnumType {
             BertPreTokenizer,
             ByteLevel,
+            CodeLexer,
             Delimiter,
             Metaspace,
             Whitespace,
@@ -101,6 +106,7 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
         pub enum PreTokenizerUntagged {
             BertPreTokenizer(BertPreTokenizer),
             ByteLevel(ByteLevel),
+            CodeLexer(CodeLexer),
             Delimiter(CharDelimiterSplit),
             Metaspace(Metaspace),
             Whitespace(Whitespace),
@@ -129,6 +135,9 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
                         serde_json::from_value(values).map_err(serde::de::Error::custom)?,
                     ),
                     EnumType::ByteLevel => PreTokenizerWrapper::ByteLevel(
+                        serde_json::from_value(values).map_err(serde::de::Error::custom)?,
+                    ),
+                    EnumType::CodeLexer => PreTokenizerWrapper::CodeLexer(
                         serde_json::from_value(values).map_err(serde::de::Error::custom)?,
                     ),
                     EnumType::Delimiter => PreTokenizerWrapper::Delimiter(
@@ -173,6 +182,9 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
                     PreTokenizerUntagged::ByteLevel(byte_level) => {
                         PreTokenizerWrapper::ByteLevel(byte_level)
                     }
+                    PreTokenizerUntagged::CodeLexer(code_lexer) => {
+                        PreTokenizerWrapper::CodeLexer(code_lexer)
+                    }
                     PreTokenizerUntagged::Delimiter(delimiter) => {
                         PreTokenizerWrapper::Delimiter(delimiter)
                     }
@@ -207,6 +219,7 @@ impl<'de> Deserialize<'de> for PreTokenizerWrapper {
 
 impl_enum_from!(BertPreTokenizer, PreTokenizerWrapper, BertPreTokenizer);
 impl_enum_from!(ByteLevel, PreTokenizerWrapper, ByteLevel);
+impl_enum_from!(CodeLexer, PreTokenizerWrapper, CodeLexer);
 impl_enum_from!(CharDelimiterSplit, PreTokenizerWrapper, Delimiter);
 impl_enum_from!(Whitespace, PreTokenizerWrapper, Whitespace);
 impl_enum_from!(Punctuation, PreTokenizerWrapper, Punctuation);

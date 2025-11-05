@@ -10,6 +10,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tk::normalizer::SplitDelimiterBehavior;
 use tk::pre_tokenizers::bert::BertPreTokenizer;
 use tk::pre_tokenizers::byte_level::ByteLevel;
+use tk::pre_tokenizers::code_lexer::CodeLexer;
 use tk::pre_tokenizers::delimiter::CharDelimiterSplit;
 use tk::pre_tokenizers::digits::Digits;
 use tk::pre_tokenizers::fixed_length::FixedLength;
@@ -100,6 +101,10 @@ impl PyPreTokenizer {
                                 .into()
                         }
                         PreTokenizerWrapper::ByteLevel(_) => Py::new(py, (PyByteLevel {}, base))?
+                            .into_pyobject(py)?
+                            .into_any()
+                            .into(),
+                        PreTokenizerWrapper::CodeLexer(_) => Py::new(py, (PyCodeLexer {}, base))?
                             .into_pyobject(py)?
                             .into_any()
                             .into(),
@@ -343,6 +348,53 @@ impl PyByteLevel {
             .into_iter()
             .map(|c| c.to_string())
             .collect()
+    }
+}
+
+/// CodeLexer pre-tokenizer for language-specific lexing of code blocks.
+///
+/// This pre-tokenizer finds markdown-style code fences and applies
+/// language-specific lexers to extract tokens. Currently supports Python.
+///
+/// Args:
+///     languages (:obj:`List[str]`, `optional`, defaults to :obj:`["python", "py"]`):
+///         List of language identifiers to apply lexing to.
+///
+/// Example:
+///     ```python
+///     from tokenizers.pre_tokenizers import CodeLexer
+///
+///     pre_tokenizer = CodeLexer(languages=["python", "py"])
+///     ```
+#[pyclass(extends=PyPreTokenizer, module = "tokenizers.pre_tokenizers", name = "CodeLexer")]
+pub struct PyCodeLexer {}
+
+#[pymethods]
+impl PyCodeLexer {
+    // #[getter]
+    // fn get_languages(self_: PyRef<Self>) -> Vec<String> {
+    //     getter!(self_, CodeLexer, languages).clone()
+    // }
+
+    // #[setter]
+    // fn set_languages(self_: PyRef<Self>, languages: Vec<String>) {
+    //     setter!(self_, CodeLexer, languages, languages)
+    // }
+
+    #[new]
+    #[pyo3(signature = (languages = None, **_kwargs), text_signature = "(self, languages=None)")]
+    fn new(
+        languages: Option<Vec<String>>,
+        _kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> (Self, PyPreTokenizer) {
+        let languages = languages.unwrap_or_else(|| vec![
+            "python".to_string(),
+            "py".to_string(),
+        ]);
+        (
+            PyCodeLexer {},
+            CodeLexer::new(languages).into(),
+        )
     }
 }
 
@@ -977,6 +1029,7 @@ impl PreTokenizer for PyPreTokenizerWrapper {
 pub fn pre_tokenizers(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPreTokenizer>()?;
     m.add_class::<PyByteLevel>()?;
+    m.add_class::<PyCodeLexer>()?;
     m.add_class::<PyWhitespace>()?;
     m.add_class::<PyWhitespaceSplit>()?;
     m.add_class::<PySplit>()?;

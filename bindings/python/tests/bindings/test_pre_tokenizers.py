@@ -17,6 +17,7 @@ from tokenizers.pre_tokenizers import (
     UnicodeScripts,
     Whitespace,
     WhitespaceSplit,
+    CodeLexer,
 )
 
 

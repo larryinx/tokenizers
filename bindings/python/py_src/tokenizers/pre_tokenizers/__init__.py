@@ -14,3 +14,4 @@ Split = pre_tokenizers.Split
 UnicodeScripts = pre_tokenizers.UnicodeScripts
 Whitespace = pre_tokenizers.Whitespace
 WhitespaceSplit = pre_tokenizers.WhitespaceSplit
+CodeLexer = pre_tokenizers.CodeLexer
