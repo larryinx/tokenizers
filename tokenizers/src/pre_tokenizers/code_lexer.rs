@@ -125,6 +125,7 @@ impl CodeLexer {
         // Fill in whitespace gaps by extending the next token backwards
         let mut filled_boundaries = Vec::new();
         let mut last_end = offset;
+        let code_end = offset + code.len();
 
         for (start, end) in boundaries {
             // If there's a gap (whitespace), attach it to the current token by moving start backwards
@@ -133,9 +134,17 @@ impl CodeLexer {
             } else {
                 start
             };
-            filled_boundaries.push((adjusted_start, end));
-            last_end = end;
+            // Clamp end to not exceed code boundary
+            let adjusted_end = std::cmp::min(end, code_end);
+            filled_boundaries.push((adjusted_start, adjusted_end));
+            last_end = adjusted_end;
         }
+
+        // eprintln!("[Python Lexer DEBUG] Code length: {}, offset: {}, last_end: {}, code_end: {}",
+        //           code.len(), offset, last_end, code_end);
+        // if last_end != code_end {
+        //     eprintln!("[Python Lexer WARNING] Gap after last token! last_end={}, expected={}", last_end, code_end);
+        // }
 
         Ok(filled_boundaries)
     }
@@ -165,7 +174,7 @@ impl CodeLexer {
 
 impl PreTokenizer for CodeLexer {
     fn pre_tokenize(&self, pretokenized: &mut PreTokenizedString) -> Result<()> {
-        eprintln!("[CodeLexer] pre_tokenize called with languages: {:?}", self.languages);
+        // eprintln!("[CodeLexer] pre_tokenize called with languages: {:?}", self.languages);
 
         // Regex to find code fence blocks: ```language\ncode\n```
         // Use [\s\S] instead of . to match any character including newlines (Oniguruma compatible)
@@ -208,14 +217,24 @@ impl PreTokenizer for CodeLexer {
                         // Extract and lex code block
                         let code = &text[fence_start_end..closing_fence_abs];
 
+                        // // DEBUG: Print code extraction details
+                        // eprintln!("[CodeLexer DEBUG] match_start={}, match_end={}, fence_start_end={}, closing_fence_abs={}",
+                        //           match_start, match_end, fence_start_end, closing_fence_abs);
+                        // eprintln!("[CodeLexer DEBUG] Code to lex (len={}): {:?}", code.len(), code);
+                        // if closing_fence_abs + 10 <= text.len() {
+                        //     eprintln!("[CodeLexer DEBUG] Next 10 chars after code: {:?}", &text[closing_fence_abs..closing_fence_abs + 10]);
+                        // }
+
                         if !lang_part.is_empty() && self.is_supported_language(lang_part) {
-                            // eprintln!("[CodeLexer] Applying lexer for language: '{}'", lang_part);
+                            // eprintln!("[CodeLexer DEBUG] Applying lexer for language: '{}'", lang_part);
                             // Apply language-specific lexing
                             match self.lex_code(lang_part, code, fence_start_end) {
                                 Ok(boundaries) => {
-                                    // eprintln!("[CodeLexer] Lexed {} tokens from {} code", boundaries.len(), lang_part);
+                                    // eprintln!("[CodeLexer DEBUG] Lexed {} tokens from {} code", boundaries.len(), lang_part);
+                                    // eprintln!("[CodeLexer DEBUG] Boundaries: {:?}", boundaries);
                                     // Add lexed boundaries
                                     for (start, end) in boundaries {
+                                        // eprintln!("[CodeLexer DEBUG] Adding split ({}, {}) -> {:?}", start, end, &text[start..end]);
                                         splits.push((start, end));
                                     }
                                 }
@@ -230,6 +249,7 @@ impl PreTokenizer for CodeLexer {
                         }
 
                         // Add closing fence (```)
+                        // eprintln!("[CodeLexer DEBUG] Adding closing fence ({}, {}) -> {:?}", closing_fence_abs, match_end, &text[closing_fence_abs..match_end]);
                         splits.push((closing_fence_abs, match_end));
                     }
                 }
